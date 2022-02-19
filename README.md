@@ -9,7 +9,7 @@ Games 103 - HW and Notes (HW File are archived and the following are notes)
 
 Update state + time step (not the frame rate)
 
-![img](E:\Github\Games103\images\1)
+![img](.\images\1)
 
 ![img](E:\Github\Games103\images\2)
 
