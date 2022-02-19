@@ -11,7 +11,7 @@ Update state + time step (not the frame rate)
 
 ![img](/images/1)
 
-![img](\images\2)
+![img](/images/2)
 
 
 
