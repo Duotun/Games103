@@ -523,7 +523,9 @@ The sum of internal forces are zero
 
 ![img](images/92)
 
-![img](https://xiaomi.f.mioffice.cn/space/api/box/stream/download/asynccode/?code=MmJjMGNmYzVkNjNlYjk4NWMyNDdmYTBjZDVkMzJiMzRfV1Z0N2pXMVpJcHBXMTExYWJ0OFBKWUdvVW5XNjBwYTVfVG9rZW46Ym94azRsSWZoU1R3cVVnRWI3akNDd21KN0dmXzE2NDUyNzk2MDU6MTY0NTI4MzIwNV9WNA)
+![img](/images/115)
+
+
 
 
 
