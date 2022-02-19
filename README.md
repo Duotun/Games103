@@ -1,5 +1,5 @@
 # Games103 - Physics-based Animation
-Games 103 - HW and Notes (HW File are archived and the following are notes)
+Games 103 - HW and Notes (HW File are archived and the followings are notes)
 
 
 
