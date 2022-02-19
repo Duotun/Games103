@@ -17,17 +17,17 @@ Update state + time step (not the frame rate)
 
 ##### Vector Definition (According to the Screen Space)
 
-![img](E:\Github\Games103\images\3)
+![img](/images/3)
 
-![img](E:\Github\Games103\images\4)
+![img](/images/4)
 
 ##### Test a Point Inside a Triangle 
 
 测试与三边连起来的normal 是否同向 (**the same directions**)
 
-![img](E:\Github\Games103\images\5)
+![img](/images/5)
 
-![img](E:\Github\Games103\images\6)
+![img](/images/6)
 
 
 
@@ -35,11 +35,11 @@ Update state + time step (not the frame rate)
 
 -> barycentric interpolation
 
-![img](E:\Github\Games103\images\7)
+![img](/images/7)
 
 ###### Tetrahedral Volume (Could be negative here, inverted)
 
-![img](E:\Github\Games103\images\8)
+![img](/images/8)
 
 ##### 
 
@@ -47,25 +47,25 @@ Update state + time step (not the frame rate)
 
 Linear Deformation -> Rotation + Scaline + Rotation
 
-![img](E:\Github\Games103\images\9)
+![img](/images/9)
 
 
 
 If A is symmetric -> **Eigenvalue Decomposition**
 
-![img](E:\Github\Games103\images\10)
+![img](/images/10)
 
 ##### Symmetric Positive Definiteness 最强解释
 
 与Eigenvalue decomposition 相结合, 从 v^T d v >0 开始, s.p.d <-> eigenvlaues are positive
 
-![img](E:\Github\Games103\images\11)
+![img](/images/11)
 
-![img](E:\Github\Games103\images\12)
+![img](/images/12)
 
 In practice, 按列/按行进行求和比较对角线元素
 
-![img](E:\Github\Games103\images\13)
+![img](images/13)
 
 
 
@@ -73,31 +73,31 @@ In practice, 按列/按行进行求和比较对角线元素
 
 spectral radius (largest absolute eigenvalue)
 
-![img](E:\Github\Games103\images\14)
+![img](images/14)
 
 ##### Derivative & Gradient
 
 Gradient -> Column vectors , from the **definition of derivatives** df/dx -> row vectors (based on that the **vector x is a column vector**)
 
-![img](E:\Github\Games103\images\15)
+![img](images/15)
 
 For a Vector -> Divergence is the **trace (sum of the diagonal elements)** of Jacobian
 
-![img](E:\Github\Games103\images\16)
+![img](images/16)
 
 The same applies to the 2nd-order Derivatives
 
-![img](E:\Github\Games103\images\17)
+![img](images/17)
 
 Let's go for an example of Derivative (|x|)
 
-![img](E:\Github\Games103\images\18)
+![img](images/18)
 
 
 
 So for the spring -> from the Engergy Function to the Hessian
 
-![img](E:\Github\Games103\images\19)
+![img](images/19)
 
 
 
@@ -109,7 +109,7 @@ cross product of imaginary part (a, b, c for i, j, k) - dot product of real part
 
 https://www.johndcook.com/blog/2012/02/15/dot-cross-and-quaternion-products/
 
-![img](E:\Github\Games103\images\20)
+![img](images/20)
 
 
 
@@ -117,19 +117,19 @@ https://www.johndcook.com/blog/2012/02/15/dot-cross-and-quaternion-products/
 
 Explicit Method (t_0)
 
-![img](E:\Github\Games103\images\21)
+![img](images/21)
 
 Implicit Method (t_1)
 
-![img](E:\Github\Games103\images\22)
+![img](images/22)
 
 Midpoint Method (t_0.5)
 
-![img](E:\Github\Games103\images\23)
+![img](images/23)
 
 Then for the posiiton update in the end, utilize two mid-point integration -> leapfrog
 
-![img](E:\Github\Games103\images\24)
+![img](images/24)
 
 
 
@@ -139,31 +139,31 @@ real part and complex part for axis + multiplication of rotations
 
 **norm of quaternion = 1** to make sure it is a rotation
 
-![img](E:\Github\Games103\images\25)
+![img](images/25)
 
-![img](E:\Github\Games103\images\26)
+![img](images/26)
 
-![img](E:\Github\Games103\images\27)
+![img](images/27)
 
 ##### Force Accumulation for Rotation and Translation (Torque and Inertia)
 
 http://www.kwon3d.com/theory/moi/iten.html
 
-![img](E:\Github\Games103\images\28)
+![img](images/28)
 
 Inertia used for describiing the **resistance** to rotational tendency caused by torque
 
 比如下图，右边旋转对物体影响会更猛一点，因为inertia 都集中在了那个轴附近 (thus, not constant)
 
-![img](E:\Github\Games103\images\29)
+![img](images/29)
 
 
 
 ##### Rigidbody Simulation Implementation
 
-![img](E:\Github\Games103\images\30)
+![img](images/30)
 
-![img](E:\Github\Games103\images\31)
+![img](images/31)
 
 
 
@@ -171,25 +171,25 @@ Inertia used for describiing the **resistance** to rotational tendency caused by
 
 Signed Distance Function Example
 
-![img](E:\Github\Games103\images\32)
+![img](images/32)
 
 Utilize SDF < 0
 
-![img](E:\Github\Games103\images\33)
+![img](images/33)
 
-![img](E:\Github\Games103\images\34)
+![img](images/34)
 
 ###### 1) Quadratic Penalty Method -> next update
 
 if sdf < 0 -> apply force to compell it + **buffer to avoid penetration**
 
-![img](E:\Github\Games103\images\35)
+![img](images/35)
 
-![img](E:\Github\Games103\images\36)
+![img](images/36)
 
 if k is not a constant factor
 
-![img](E:\Github\Games103\images\37)
+![img](images/37)
 
 
 
@@ -197,7 +197,7 @@ if k is not a constant factor
 
 change the position and velocity all of a sudden + apply Coulomb's law
 
-![img](E:\Github\Games103\images\38)
+![img](images/38)
 
 
 
@@ -205,17 +205,17 @@ change the position and velocity all of a sudden + apply Coulomb's law
 
 \1) Move vertices independently 2) Add **rigidity constraints** to keep rigid body
 
-![img](E:\Github\Games103\images\39)
+![img](images/39)
 
  Keep the centroid the same as before
 
-![img](E:\Github\Games103\images\40)
+![img](images/40)
 
 Polar Decomposition -> Rotation and Deformation (Scaling)
 
-![img](E:\Github\Games103\images\41)
+![img](images/41)
 
-![img](E:\Github\Games103\images\42)
+![img](images/42)
 
 ##### Mass-Spring System
 
@@ -223,15 +223,15 @@ Polar Decomposition -> Rotation and Deformation (Scaling)
 
 spring force - restoring the spring (negative derivative of energy)
 
-![img](E:\Github\Games103\images\43)
+![img](images/43)
 
 For multiple springs, energe and forces are simply summed up
 
-![img](E:\Github\Games103\images\44)
+![img](images/44)
 
 Bending spring is used to avoid bending along some directions / diagonal springs for diagonal stretching and compress
 
-![img](E:\Github\Games103\images\45)
+![img](images/45)
 
 ###### 2) Build mass-spring system from triangular mesh
 
@@ -241,65 +241,65 @@ should consider the the diagonal spring across two triangles (**utilizing neighb
 
 overshooting happens generally when stiffness is large or the delta time is large.
 
-![img](E:\Github\Games103\images\46)
+![img](images/46)
 
 ###### 4) Implicit Integration (x[1] from v[1], v[1] from f[1])
 
 Solve the equation by assuming forces are **only influced** by the position
 
-![img](E:\Github\Games103\images\47)
+![img](images/47)
 
 -> Optimize Porblem (argmin)
 
-![img](E:\Github\Games103\images\48)
+![img](images/48)
 
 Then utilize approximation method to solve: e.g., newton-raphson method + taylor expansion
 
-![img](E:\Github\Games103\images\49)
+![img](images/49)
 
 either **local minimum or maximum** method depending on the second derivatives
 
-![img](E:\Github\Games103\images\50)
+![img](images/50)
 
 Compute the Gradient (delta_x) then
 
-![img](E:\Github\Games103\images\51)
+![img](images/51)
 
 ###### 5) Spring Hessian
 
 When spring is streatched, H is spd (1 - L/||x|| >0). When spring is compressed, H may be not and then producing **multiple outcomes**.
 
-![img](E:\Github\Games103\images\52)
+![img](images/52)
 
 
 
-![img](E:\Github\Games103\images\53)
+![img](images/53)
 
 
 
 delta_t less, H becomes more spd
 
-![img](E:\Github\Games103\images\54)
+![img](images/54)
 
 Positive Definiteness & Maximum & Minimum
 
-![img](E:\Github\Games103\images\55)
+![img](images/55)
 
 If H is not Spd the **AX = B is hard to solve**
 
-![img](E:\Github\Games103\images\56)
+![img](images/56)
 
 ###### 6) Method to solve Linear System (Just a few here)
 
 Jacobi utilize the residual to iterate and diagonal of the A matrix
 
-![img](E:\Github\Games103\images\57)
+![img](images/57)
 
 
 
-![img](E:\Github\Games103\images\58)
+![img](images/58)
 
-![img](E:\Github\Games103\images\59)
+![img](images/59)
 
 
 
@@ -307,19 +307,19 @@ Jacobi utilize the residual to iterate and diagonal of the A matrix
 
 Length changes a little for the bending -> use dihedral angle model to solve
 
-![img](E:\Github\Games103\images\60)
+![img]images/60)
 
 the sum of internal forces is zero; don't stretch the bending edge; span of normals
 
-![img](E:\Github\Games103\images\61)
+![img](images/61)
 
-![img](E:\Github\Games103\images\62)
+![img](images/62)
 
 Then obtain the forces as a function with u and f considering the bending angle (theta)
 
 This method is very hard to do implicit integration since the derivative is too hard (**no definition for the energy**)
 
-![img](E:\Github\Games103\images\63)
+![img](images/63)
 
 Then, there is another bending model which is easy to implement - **quadratic bending model**
 
@@ -327,9 +327,9 @@ quadratic model based on two assumptions: little straching and **starting from**
 
 Highly related to the **laplacian operator /curvature**
 
-![img](E:\Github\Games103\images\64)
+![img](images/64)
 
-![img](E:\Github\Games103\images\65)
+![img](images/65)
 
 
 
@@ -339,9 +339,9 @@ consider a high stiffness spring, then the bottom-right case is nearly impossibl
 
 The fundamental reason is due to a short of **degree of freedom**
 
-![img](E:\Github\Games103\images\66)
+![img](images/66)
 
-![img](E:\Github\Games103\images\67)
+![img](images/67)
 
 
 
@@ -349,21 +349,21 @@ The fundamental reason is due to a short of **degree of freedom**
 
 ###### Stiffness Issue - incersing stiffness (k) can be problematic sometimes
 
-![img](E:\Github\Games103\images\68)
+![img](images/68)
 
 For example, length as a constraint -> projection function (keep the mass center constant)
 
-![img](E:\Github\Games103\images\69)
+![img](images/69)
 
 multiple springs approaching the **constrained conditions (rest length)**
 
-![img](E:\Github\Games103\images\70)
+![img](images/70)
 
-![img](E:\Github\Games103\images\71)
+![img](images/71)
 
 Then to avoid the above bias problem, jacobi method is presented. Process **all** the edges related to the one vertex first and update **the average case** then. (n is for the number of updating)
 
-![img](E:\Github\Games103\images\72)
+![img](images/72)
 
 
 
@@ -379,9 +379,9 @@ PBD is based on the **projection function** and that's why we mentioned the abov
 
 Generally simulating in real-time when the vertices are less than **1000**
 
-![img](E:\Github\Games103\images\73)
+![img](images/73)
 
-![img](E:\Github\Games103\images\74)
+![img](images/74)
 
 To improve the cons of PBD, let's do some improvements
 
@@ -389,25 +389,25 @@ To improve the cons of PBD, let's do some improvements
 
 Use **projection function for correction only** rather than simulation in PBD
 
-![img](E:\Github\Games103\images\75)
+![img](images/75)
 
 Spring Strain limit **becomes a range** (relax the constraints)
 
 **Strain is the physics parameter** to describe the stratching change property
 
-![img](E:\Github\Games103\images\76)
+![img](images/76)
 
-![img](E:\Github\Games103\images\77)
+![img](images/77)
 
 This relaxation could be 2D, 3D. For example, the following triangle area case
 
 Update the vertice case according to the mass point and newly scaling factor
 
-![img](E:\Github\Games103\images\78)
+![img](images/78)
 
 Why we use strain limiting - a good complement for the large deformation and locking issue
 
-![img](E:\Github\Games103\images\79)
+![img](images/79)
 
 ##### Projective Dynamics
 
@@ -419,23 +419,23 @@ To keep it original the distance between x_inew and x_jnew should be the **rest 
 
 Utilize the projection of x_inew and x_jnew **in the middle**
 
-![img](E:\Github\Games103\images\80)
+![img](images/80)
 
 The main difference with the previous spring model is the **Hessian, making a** **constant Hessian (related to the identity matrix only)**
 
 Diagonal parts store the **information of vertices** and non-diagonal parts store the **edge informaiton. Be carefule about the positive and negative things**
 
-![img](E:\Github\Games103\images\81)
+![img](images/81)
 
 Simulation by Projective Dynamics
 
 Solve a linear system with a **constant matrix which could be** **precomuputed** **for all**
 
-![img](E:\Github\Games103\images\82)
+![img](images/82)
 
 ###### Why does it work for all (Porjective Dynamics)
 
-![img](E:\Github\Games103\images\83)
+![img](images/83)
 
 
 
@@ -473,11 +473,11 @@ Cons:
 
 Reduce **iteration numbers** while performing a good convergence with the high stiffness
 
-![img](E:\Github\Games103\images\84)
+![img](images/84)
 
 Build the linear system with two equations (momentum and updating with lambda)
 
-![img](E:\Github\Games103\images\85)
+![img](images/85)
 
 
 
@@ -485,13 +485,13 @@ Then solve this linear system
 
 Solve the two unknown variables together (**primal-dual, often requiring Positive definite)** or schur complement
 
-![img](E:\Github\Games103\images\86)
+![img](images/86)
 
 ![img](https://xiaomi.f.mioffice.cn/space/api/box/stream/download/asynccode/?code=MGM4YmM5ODM4MWU1OWUzM2E0YTM1ZjEyZTdhNjYyZWNfeW5EUldEeW8yejA0VWVxdnhMa2pEV3BWblA2VW9HQ2FfVG9rZW46Ym94azRjYzNaS0FWTDRVcHAxaTdBcGg5VnVlXzE2NDUyNzk2MDU6MTY0NTI4MzIwNV9WNA)
 
 Summary of the Above
 
-![img](E:\Github\Games103\images\87)
+![img](images/87)
 
 
 
@@ -499,9 +499,9 @@ Summary of the Above
 
 Deformation could be described in a linear equation. F could also describe the **vector change but F also contains rotation.**
 
-![img](E:\Github\Games103\images\88)
+![img](images/88)
 
-![img](E:\Github\Games103\images\89)
+![img](images/89)
 
 **Green Strain** (G) -> a symmtry matrix utilizing svd to cancel extra elements
 
@@ -509,19 +509,19 @@ Strain (a type of tensor) is defined to describe the deformation
 
 G is rotation invariant
 
-![img](E:\Github\Games103\images\90)
+![img](images/90)
 
 ###### Strain Energy Density Function
 
 e.g., stvk model (Saint Venant-Kirchhoff Model) + lame parameters in the **reference states**
 
-![img](E:\Github\Games103\images\91)
+![img](images/91)
 
 The we could obtian the forces from the density funciton
 
 The sum of internal forces are zero
 
-![img](E:\Github\Games103\images\92)
+![img](images/92)
 
 ![img](https://xiaomi.f.mioffice.cn/space/api/box/stream/download/asynccode/?code=MmJjMGNmYzVkNjNlYjk4NWMyNDdmYTBjZDVkMzJiMzRfV1Z0N2pXMVpJcHBXMTExYWJ0OFBKWUdvVW5XNjBwYTVfVG9rZW46Ym94azRsSWZoU1R3cVVnRWI3akNDd21KN0dmXzE2NDUyNzk2MDU6MTY0NTI4MzIwNV9WNA)
 
@@ -533,13 +533,13 @@ Let's start with the source of internal deformable forces
 
 Tranction t: internal force per unit length (area)
 
-![img](E:\Github\Games103\images\93)
+![img](images/93)
 
  Normal is constant over edges (3D over areas)
 
-![img](E:\Github\Games103\images\94)
+![img](images/94)
 
-![img](E:\Github\Games103\images\95)
+![img](images/95)
 
 
 
@@ -547,7 +547,7 @@ Tranction t: internal force per unit length (area)
 
 Obtain averaged positoin values by local neighbors (often used to ease numerical instability) 
 
-![img](E:\Github\Games103\images\96)
+![img](images/96)
 
 
 
@@ -561,29 +561,29 @@ Stress is computed in the reference state in FEM for the energy density
 
 Stress is computed in the deformed state in FVM for the calculation of force.
 
-![img](E:\Github\Games103\images\97)
+![img](images/97)
 
 
 
-![img](E:\Github\Games103\images\98)
+![img](images/98)
 
-![img](E:\Github\Games103\images\99)
+![img](images/99)
 
-![img](E:\Github\Games103\images\100)
+![img](images/100)
 
 Then using the above translation to obtain the cauchy stress to calculate the **forces**
 
 To calculate the force, we could use the three above stresses
 
-![img](E:\Github\Games103\images\101)
+![img](images/101)
 
-![img](E:\Github\Games103\images\102)
+![img](images/102)
 
 
 
 ###### FEM/FVM Framework
 
-![img](E:\Github\Games103\images\103)
+![img](images/103)
 
 In the implementaiton stage, we can apply no force on elements to identify our implementation, which means F becomes identity, G becomes zero and all the internal forces become zero too.
 
@@ -591,7 +591,7 @@ In the implementaiton stage, we can apply no force on elements to identify our i
 
 From energy density -> stress, treat First PK stress P is a function of Deformation gradient (F)
 
-![img](E:\Github\Games103\images\104)
+![img](images/104)
 
 
 
@@ -601,19 +601,19 @@ Streatch in different positions and direcitons causing the same deformation (如
 
 Then we only wanna how to stretch (scaling) looks like, which is called the principal stretch
 
-![img](E:\Github\Games103\images\105)
+![img](images/105)
 
-![img](E:\Github\Games103\images\106)
+![img](images/106)
 
 Then, the simulation of hyperelastic model could become the following loop
 
-![img](E:\Github\Games103\images\107)
+![img](images/107)
 
 ###### Limitation of STVK
 
 If deformation is somehow inversed, the stress will become zero and the deformation **cannot be restored to 1**.
 
-![img](E:\Github\Games103\images\108)
+![img](images/108)
 
 
 
@@ -621,13 +621,13 @@ If deformation is somehow inversed, the stress will become zero and the deformat
 
 used to help keep the volume **constant** when the stress is applied (例如拉上去，那么其他部分会瘦身从而保持体积恒定）
 
-![img](E:\Github\Games103\images\109)
+![img](images/109)
 
 
 
 ###### Summary of FEM and FVM (Derivative and Integral)
 
-![img](E:\Github\Games103\images\110)
+![img](images/110)
 
 
 
@@ -635,7 +635,7 @@ used to help keep the volume **constant** when the stress is applied (例如拉�
 
 **Descent Gradient Method -> Step Size**
 
-![img](E:\Github\Games103\images\111)
+![img](/images/111)
 
 ![img](https://xiaomi.f.mioffice.cn/space/api/box/stream/download/asynccode/?code=YzJmZDQ4ZjBiZWZlY2JiMzc3NGYxMzkxMGE1ZDUwYzdfT1lvVGIyTHJ4cmFDRkY4WVNTc09PSU44M1VLbmZzYWNfVG9rZW46Ym94azRNZk9hWmFCbDJSc2pCNDdnbmkxdFRlXzE2NDUyNzk2MDY6MTY0NTI4MzIwNl9WNA)
 
@@ -645,15 +645,15 @@ used to help keep the volume **constant** when the stress is applied (例如拉�
 
 Utilize the dot product, if in the same side of the gradient, then the direction is OK
 
-![img](E:\Github\Games103\images\112)
+![img](/images/112)
 
 ![img](https://xiaomi.f.mioffice.cn/space/api/box/stream/download/asynccode/?code=NDQzYmYyMzRkNDE4ZmZiYTQwYmM4OTUwYzhiYzFmY2VfRjJKV2hwYmtDR0xEb2FRa1hRQ3FkbXdFTk9nOHBBQ2VfVG9rZW46Ym94azRpNmpuTU1scjZ3ZlNET09VRk9sU3lkXzE2NDUyNzk2MDY6MTY0NTI4MzIwNl9WNA)
 
  So, in the origin, the descent describe how the **integration** could work
 
-![img](E:\Github\Games103\images\113)
+![img](/images/113)
 
 For example, why we don't newton's method in the often cases is because that the per-iteracion cost is too much since we have to compute the **hessian matrix** each iteration.
 
-![img](E:\Github\Games103\images\114)
+![img](/images/114)
 
