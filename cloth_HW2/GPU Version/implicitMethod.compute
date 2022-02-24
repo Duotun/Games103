@@ -1,0 +1,145 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Get_Gradient_V
+#pragma kernel Get_Gradient_E
+#pragma kernel AddtoFinalG
+#pragma kernel Initial_SetUp
+#pragma kernel Update_Position
+#pragma kernel Update_Velocity
+#pragma kernel CollisionHandle
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWStructuredBuffer<float3> X;
+RWStructuredBuffer<float3> X_hat;
+RWStructuredBuffer<float3> G;
+RWStructuredBuffer<int3> G_Edelta;
+RWStructuredBuffer<float3> V;
+StructuredBuffer<int> EO;  
+StructuredBuffer<int> ED;
+StructuredBuffer<float> L;     //only can be read in the compute shader
+
+
+//physical parameters
+float t;   //delta_time
+float mass;
+float damping;
+float spring_k;
+float3 gravity;
+float3 sphere_center;
+float r;  // the radius of sphere
+uint totalVerts;
+uint totalEdges;
+
+
+//uav - unordered access view
+void AtomicAddDelta(int indexIntoDeltaPos, float newDeltaVal, int axis)
+{
+    //using int to make sure negative could be used as well
+    int i_val = asint(newDeltaVal);   //add as the samllest int val
+    int tmp0 = 0;  //as a compare value to add
+    int tmp1;
+    while (true)
+    {
+        InterlockedCompareExchange(G_Edelta[indexIntoDeltaPos][axis], tmp0, i_val, tmp1);
+        
+        if (tmp1 == tmp0)
+            break;
+        tmp0 = tmp1;
+        i_val = asint(newDeltaVal + asfloat(tmp1));
+    }
+}
+
+[numthreads(8, 1, 1)]
+void Get_Gradient_V(uint3 id : SV_DispatchThreadID)
+{
+    uint idx = id.x;
+    if (idx > totalVerts)
+        return;
+    G[idx] = 1.0 / t / t * mass * (X[idx] - X_hat[idx]);
+    G[idx] -= mass * gravity;
+    
+    //initial G_Edelta
+    G_Edelta[idx] = int3(0, 0, 0);
+}
+
+//problem begins here the edge for vertices -> memory access chaos
+[numthreads(8, 1, 1)]   // double the dispatch group size to simulate half loop
+void Get_Gradient_E(uint3 id : SV_DispatchThreadID)
+{
+    uint idx = id.x;
+    if (idx > totalEdges)
+        return;
+    uint vi = EO[idx];
+    uint vj = ED[idx];
+    float len = length(X[vj] - X[vi]);
+    float3 val = spring_k * (1.0 - L[idx] / len) * (X[vi] - X[vj]);
+    AtomicAddDelta(vi, val.x, 0);
+    AtomicAddDelta(vi, val.y, 1);
+    AtomicAddDelta(vi, val.z, 2);
+    
+    AtomicAddDelta(vj, -val.x, 0);
+    AtomicAddDelta(vj, -val.y, 1);
+    AtomicAddDelta(vj, -val.z, 2);
+    
+    //G[vi] += spring_k*(1.0 - L[idx]/len)*(X[vi] - X[vj]);
+    //G[vj] -= spring_k*(1.0 - L[idx]/len)*(X[vi] - X[vj]);
+}
+
+[numthreads(8, 1, 1)]
+void AddtoFinalG(uint3 id: SV_DispatchThreadID)
+{
+    uint idx = id.x; 
+    G[idx] += float3(asfloat(G_Edelta[idx].x), asfloat(G_Edelta[idx].y), asfloat(G_Edelta[idx].z));
+
+}
+
+//damping applied
+[numthreads(8, 1, 1)]
+void Initial_SetUp(uint3 id : SV_DispatchThreadID)
+{
+    //G[id] = float3(0.0, 0.0, 0.0);
+    uint idx = id.x;
+    if (idx == 0 || idx == 20 || idx > totalVerts)
+        return;
+    V[idx] *= damping;
+    float3 dis = X[idx] + V[idx] * t;
+    X_hat[idx] =  dis;
+    X[idx] = float3(X_hat[idx].x, X_hat[idx].y, X_hat[idx].z); //assign a new value
+}
+
+[numthreads(8, 1, 1)]
+void Update_Position(uint3 id: SV_DispatchThreadID)
+{
+    uint idx = id.x;
+    if (idx == 0 || idx == 20 || idx >totalVerts)   //two fixed points
+        return;
+    X[idx] += -1.0 / (1.0 / t / t * mass + 4.0 * spring_k) * G[idx];
+}
+
+[numthreads(8, 1, 1)]
+void Update_Velocity(uint3 id: SV_DispatchThreadID)
+{
+    uint idx = id.x;
+    if (idx == 0 || idx == 20 || idx >totalVerts)   //two fixed points
+        return;
+    float3 dis = X[idx] - X_hat[idx];
+    V[idx] += 1.0 / t * dis;
+
+}
+
+[numthreads(8, 1, 1)]
+void CollisionHandle(uint3 id : SV_DispatchThreadID)
+{
+    float dis = 0.0;
+    uint idx = id.x;
+    if (idx == 0 || idx == 20 || idx > totalVerts)   //two fixed points
+        return;
+    dis = length(X[idx] - sphere_center);
+    if(dis < r)
+    {
+        V[idx] += 1.0 / t * (sphere_center + r * (X[idx] - sphere_center) / dis - X[idx]);
+        X[idx] = sphere_center + r * (X[idx] - sphere_center) / dis;
+    }
+        
+}
+
