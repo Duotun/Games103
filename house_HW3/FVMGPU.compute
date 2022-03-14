@@ -1,0 +1,316 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Laplacian_Smoothing_v1
+#pragma kernel Laplacian_Smoothing_v2
+#pragma kernel Laplacian_Smoothing_v3
+#pragma kernel Laplacian_Smoothing_v4
+#pragma kernel Jump_Up
+#pragma kernel Force_Init
+#pragma kernel Force_Compute
+#pragma kernel Force_Final
+#pragma kernel Update_Simulation
+#pragma kernel Init_InvDm
+
+
+//unity matrix is column major, column-major as well in compute shader
+
+RWStructuredBuffer<float3> Force;
+RWStructuredBuffer<int3> Force_delta;
+RWStructuredBuffer<float3> V;
+RWStructuredBuffer<float3> X;    //for the Mesh
+
+RWStructuredBuffer<float4x4> inv_Dm;    //read-only is fine
+//for Laplacian Smoothing
+RWStructuredBuffer<float3> V_sum; 
+RWStructuredBuffer<int3> V_Sumdelta;   //for the interlocked Adding
+RWStructuredBuffer<uint> V_num;    
+StructuredBuffer<int> Tet;       
+
+//physical parameters for the simulation
+float dt;
+float mass;
+float stiffness_0;
+float stiffness_1;
+float damp;
+
+float3 gravity;
+float3 N;
+float3 P;
+
+float u_T;
+float u_N;
+float blend_a;
+
+int tet_number;
+int total_verts;
+
+//float4x4 invs[1389];  //try SetMatrixarray()
+
+static float4x4 identity =
+{
+    { 1, 0, 0, 0 },
+    { 0, 1, 0, 0 },
+    { 0, 0, 1, 0 },
+    { 0, 0, 0, 1 }
+};
+
+float Matrix_Trace(float4x4 a)
+{
+    return a[0][0] + a[1][1] + a[2][2];   //no need to consider the last one 3X3
+}
+
+float4x4 Build_Edge_Matrix(uint tet)
+{
+    float3 X0 = X[Tet[4 * tet]];
+    float3 X1 = X[Tet[4 * tet+1]];
+    float3 X2 = X[Tet[4 * tet+2]];
+    float3 X3 = X[Tet[4 * tet+3]];
+    return  float4x4(X1.x - X0.x, X2.x - X0.x, X3.x - X0.x, 0.0,
+    X1.y - X0.y, X2.y - X0.y, X3.y - X0.y, 0.0,
+    X1.z - X0.z, X2.z - X0.z, X3.z - X0.z, 0.0,
+    0.0, 0.0, 0.0, 1.0);
+}
+
+
+void AtomicAdd_Vsum(int indexIntoDeltaPos, float newDeltaVal, int axis)
+{
+    //using int to make sure negative could be used as well
+    int i_val = asint(newDeltaVal); //add as the samllest int val
+    int tmp0 = 0; //as a compare value to add
+    int tmp1;
+    
+    [allow_uav_condition]
+    while (true)
+    {
+        InterlockedCompareExchange(V_Sumdelta[indexIntoDeltaPos][axis], tmp0, i_val, tmp1);
+        
+        if (tmp1 == tmp0)
+            break;
+        tmp0 = tmp1;
+        i_val = asint(newDeltaVal + asfloat(tmp1));
+    }
+}
+
+void AtomicAdd_Force(int indexIntoDeltaPos, float newDeltaVal, int axis)
+{
+    //using int to make sure negative could be used as well
+    int i_val = asint(newDeltaVal); //add as the samllest int val
+    int tmp0 = 0; //as a compare value to add, starting values are zero
+    int tmp1;
+    
+    //InterlockedAdd(Force_delta[indexIntoDeltaPos][axis], i_val, tmp0);
+    [allow_uav_condition]
+    while (true)
+    {
+        InterlockedCompareExchange(Force_delta[indexIntoDeltaPos][axis], tmp0, i_val, tmp1);
+        
+        if (tmp1 == tmp0)
+            break;
+        tmp0 = tmp1;
+        i_val = asint(newDeltaVal + asfloat(tmp1));
+    }
+}
+
+//directly add since V_num element is integer stuff
+void AtomicAdd_Vnum(int indexIntoDeltaPos, uint newDeltaVal)
+{
+    uint i_val = asuint(newDeltaVal);
+    uint tmp0 = 0; //as a compare value to add
+    uint tmp1;
+    [allow_uav_condition]
+    while (true)
+    {
+        InterlockedCompareExchange(V_num[indexIntoDeltaPos], tmp0, i_val, tmp1);
+        
+        if (tmp1 == tmp0)
+            break;
+        tmp0 = tmp1;
+        i_val = asuint(newDeltaVal + tmp1);
+    }
+}
+
+
+[numthreads(16, 1, 1)]
+void Laplacian_Smoothing_v1(uint3 id : SV_DispatchThreadID)  //initialize values to zero
+{
+    uint idx = id.x;
+    V_sum[idx] = float3(0, 0, 0);
+    V_num[idx] = 0;
+    V_Sumdelta[idx] = int3(0, 0, 0);
+    Force_delta[idx] = int3(0, 0, 0);     //back to the initialvalues
+}
+
+[numthreads(16, 1, 1)]
+void Laplacian_Smoothing_v2(uint3 id : SV_DispatchThreadID)  //compute v_sum and v_num
+{
+    uint idx = id.x;
+    uint p0 = Tet[4 * idx], p1 = Tet[4 * idx + 1];
+    uint p2 = Tet[4 * idx+2], p3 = Tet[4 * idx + 3];
+    
+    AtomicAdd_Vsum(p3, (V[p0] + V[p1] + V[p2]).x, 0);
+    AtomicAdd_Vsum(p3, (V[p0] + V[p1] + V[p2]).y, 1);
+    AtomicAdd_Vsum(p3, (V[p0] + V[p1] + V[p2]).z, 2);
+    AtomicAdd_Vnum(p3, 3);
+    
+    AtomicAdd_Vsum(p2, (V[p0] + V[p1] + V[p3]).x, 0);
+    AtomicAdd_Vsum(p2, (V[p0] + V[p1] + V[p3]).y, 1);
+    AtomicAdd_Vsum(p2, (V[p0] + V[p1] + V[p3]).z, 2);
+    AtomicAdd_Vnum(p2, 3);
+    
+    AtomicAdd_Vsum(p1, (V[p0] + V[p3] + V[p2]).x, 0);
+    AtomicAdd_Vsum(p1, (V[p0] + V[p3] + V[p2]).y, 1);
+    AtomicAdd_Vsum(p1, (V[p0] + V[p3] + V[p2]).z, 2);
+    AtomicAdd_Vnum(p1, 3);
+    
+    AtomicAdd_Vsum(p0, (V[p3] + V[p1] + V[p2]).x, 0);
+    AtomicAdd_Vsum(p0, (V[p3] + V[p1] + V[p2]).y, 1);
+    AtomicAdd_Vsum(p0, (V[p3] + V[p1] + V[p2]).z, 2);
+    AtomicAdd_Vnum(p0, 3);
+    
+}
+
+[numthreads(16, 1, 1)]
+void Laplacian_Smoothing_v3(uint3 id : SV_DispatchThreadID)  //Add to the Final V_sum
+{
+    uint idx = id.x;
+    V_sum[idx] += float3(asfloat(V_Sumdelta[idx].x), asfloat(V_Sumdelta[idx].y), asfloat(V_Sumdelta[idx].z));
+}
+
+[numthreads(16, 1, 1)]
+void Laplacian_Smoothing_v4(uint3 id : SV_DispatchThreadID)  //perform the smoothing (blending)
+{
+    uint idx = id.x;
+    //float3 ov = float3(V[idx]);
+    V[idx] = blend_a * V[idx] + (1.0 - blend_a) * V_sum[idx] / V_num[idx];
+}
+
+[numthreads(16, 1, 1)]
+void Jump_Up(uint3 id : SV_DispatchThreadID)   //for the jumping up a little bit
+{
+    uint idx = id.x;
+    V[idx].y += 0.5;
+}
+
+[numthreads(16, 1, 1)]
+void Force_Init(uint3 id : SV_DispatchThreadID)
+{
+
+    //Add the gracity force
+    uint idx = id.x;
+    Force[idx] = float3(gravity);
+    //Force[idx] = float3(0, 0, 0);
+}
+
+[numthreads(16, 1, 1)]
+void Force_Compute(uint3 id : SV_DispatchThreadID)
+{
+    uint idx = id.x;
+    if (idx > (uint) tet_number) return;
+    //deformation Gradient
+    uint p0 = Tet[4 * idx], p1 = Tet[4 * idx + 1];
+    uint p2 = Tet[4 * idx + 2], p3 = Tet[4 * idx + 3];
+
+    //float4x4 tmp = invs[idx];
+    float4x4 F = Build_Edge_Matrix(idx);
+    F = mul(F, inv_Dm[idx]);
+    F[3][3] = 1.0;
+    
+    //Green Strain
+    float4x4 G = (mul(transpose(F), F) + -1.0 * identity) * 0.5;
+    G[3][3] = 1.0;
+    
+    //Second PK Stress
+    float4x4 S = G * 2.0 * stiffness_1 + identity * stiffness_0 * Matrix_Trace(G);
+    S[3][3] = 1.0;
+    
+    //first PK Stress
+    float4x4 P_m = mul(F, S);
+    P_m[3][3] = 1.0;
+    
+    //tet force computed
+    //float4x4 F_3 = float4x4(identity) * -1.0 / 6.0;
+    float4x4 F_3 = mul(P_m, transpose(inv_Dm[idx])) * -1.0 / 6.0;
+    if(abs(determinant(inv_Dm[idx]) - 0.0) > 0.001)    //very wired......
+        F_3 /= determinant(inv_Dm[idx]);
+    else
+        return;
+   
+    AtomicAdd_Force(p1, F_3[0][0], 0);
+    AtomicAdd_Force(p1, F_3[1][0], 1);
+    AtomicAdd_Force(p1, F_3[2][0], 2);
+    
+    AtomicAdd_Force(p2, F_3[0][1], 0);
+    AtomicAdd_Force(p2, F_3[1][1], 1);
+    AtomicAdd_Force(p2, F_3[2][1], 2);
+    
+    AtomicAdd_Force(p3, F_3[0][2], 0);
+    AtomicAdd_Force(p3, F_3[1][2], 1);
+    AtomicAdd_Force(p3, F_3[2][2], 2);
+    
+    //minus p0 
+    AtomicAdd_Force(p0, -F_3[0][0], 0);
+    AtomicAdd_Force(p0, -F_3[1][0], 1);
+    AtomicAdd_Force(p0, -F_3[2][0], 2);
+    
+    AtomicAdd_Force(p0, -F_3[0][1], 0);
+    AtomicAdd_Force(p0, -F_3[1][1], 1);
+    AtomicAdd_Force(p0, -F_3[2][1], 2);
+    
+    AtomicAdd_Force(p0, -F_3[0][2], 0);
+    AtomicAdd_Force(p0, -F_3[1][2], 1);
+    AtomicAdd_Force(p0, -F_3[2][2], 2);
+
+}
+
+[numthreads(16, 1, 1)]
+void Force_Final(uint3 id : SV_DispatchThreadID)   // obtain the final force values from deformation
+{
+    uint idx = id.x;
+    Force[idx] += float3(asfloat(Force_delta[idx][0]), asfloat(Force_delta[idx][1]), asfloat(Force_delta[idx][2]));
+
+}
+
+[numthreads(16, 1, 1)]
+void Update_Simulation(uint3 id : SV_DispatchThreadID)
+{
+    //Update X and V 
+    uint idx = id.x;
+    if (idx > (uint) total_verts) return;
+    V[idx] += (Force[idx] / mass) * dt; //simulation of acceleration
+    V[idx] *= damp;
+    X[idx] += V[idx] * dt;
+    
+    // particle collision with floor. impulse-based  N of plane(0, 1, 0)
+    float phi = dot(X[idx] - P, N);
+    if (phi >= 0 || dot(V[idx], N) >= 0) return; 
+    float3 V_Ni = dot(V[idx], N) * N;
+    float3 V_Ti = V[idx] - V_Ni;
+    float alpha = max(0, 1.0 - u_T * (1.0 + u_N) * length(V_Ni) / length(V_Ti));
+
+    V_Ni = -u_N * V_Ni;
+    V_Ti = alpha * V_Ti;
+    V[idx] = V_Ni + V_Ti;
+
+    //also Update the Position Here
+    X[idx] = X[idx] + N * abs(phi);
+    
+}
+
+
+//seems to be useless, could be ignored
+[numthreads(16, 1, 1)]
+void Init_InvDm(uint3 id : SV_DispatchThreadID)
+{
+    uint idx = id.x;
+    if (abs(determinant(inv_Dm[idx]) - 0.0) <= 0.001)
+    {
+        inv_Dm[idx] = float4x4(1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1);
+    }
+}
+
+
+
+
+
