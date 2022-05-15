@@ -21,8 +21,10 @@ public class cube_motion : MonoBehaviour
 		{
 			pressed = true;
 			Ray ray=Camera.main.ScreenPointToRay (Input.mousePosition);
-			if(Vector3.Cross(ray.direction, transform.position - ray.origin).magnitude<0.8f)	cube_move=true;
-			else 																				cube_move=false;
+			if(Vector3.Cross(ray.direction, transform.position - ray.origin).magnitude<0.8f)	
+				cube_move=true;
+			else 																				
+				cube_move=false;
 			offset = Input.mousePosition - Camera.main.WorldToScreenPoint (transform.position);
 		}
 		if (Input.GetMouseButtonUp (0))

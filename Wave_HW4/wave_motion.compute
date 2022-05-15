@@ -1,0 +1,87 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel HeightLoad
+#pragma kernel ComputeNewH
+#pragma kernel UpdateNewH
+#pragma kernel AssignToH
+#pragma kernel HeightToMesh
+
+//Conjugate Gradient part is performed on CPU
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWStructuredBuffer<float3> X;   //mesh pos 
+RWStructuredBuffer<float> h;
+RWStructuredBuffer<float> new_h;
+RWStructuredBuffer<float> old_h;
+RWStructuredBuffer<float> vh;
+
+uint size;    //100 default value
+float rate;
+float gamma;
+float damping;
+
+
+
+[numthreads(8,8,1)]
+void HeightLoad (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: just obtain height from y component of mesh
+	if(id.x < size && id.y <size)
+	{	
+		uint y = id.y*size;
+		h[id.x + y] =  X[id.x + y].y;
+	}
+
+
+}
+
+[numthreads(8,8,1)]
+void ComputeNewH(uint3 id: SV_DispatchThreadID)
+{
+    uint i= id.x, j = id.y; 
+	if(id.x>=uint(size) || id.y >=uint(size)) return;
+    new_h[i + j*size] = h[i+j*size] + damping * (h[i+j*size] - old_h[i+j*size]);
+    //volume preservation
+	if(i-1>=0)
+		new_h[i+ j*size] += rate * (h[(i-1) + j*size] - h[i + j*size]);
+	if(i+1< size)
+		new_h[i + j*size] += rate * (h[(i+1) + j*size] - h[i + j*size]);
+	if (j - 1 >= 0)
+		new_h[i + j*size] += rate * (h[i + (j-1)*size] - h[i + j*size]);
+	if (j + 1 < size)
+		new_h[i + j*size] += rate * (h[i + (j+1)*size] - h[i + j*size]);
+
+
+}
+
+
+[numthreads(8,8,1)]
+void  UpdateNewH(uint3 id: SV_DispatchThreadID)
+{
+	uint i= id.x, j = id.y;
+	if(id.x>=uint(size) || id.y >=uint(size)) return;
+	if (i - 1 >= 0)
+		new_h[i + j*size] += rate * gamma * (vh[(i-1) + j*size] - vh[i + j*size]);
+	if (i + 1 < size)
+		new_h[i + j*size] += rate * gamma * (vh[(i+1) + j*size] - vh[i + j*size]);
+	if (j - 1 >= 0)
+		new_h[i + j*size] += rate * gamma * (vh[i+ (j-1)*size] - vh[i + j*size]);
+	if (j + 1 < size)
+		new_h[i + j*size] += rate * gamma * (vh[i + (j+1)*size] - vh[i + j*size]);
+}
+
+[numthreads(8,8,1)]
+void AssignToH(uint3 id: SV_DispatchThreadID)
+{
+	uint i= id.x, j = id.y;
+	if(id.x>=uint(size) || id.y >=uint(size)) return;
+	
+	old_h[i + j *size ] = h[i+ j *size];
+	h[i + j *size ] = new_h[i + j *size ];
+}
+
+[numthreads(8,8,1)]
+void HeightToMesh(uint3 id: SV_DispatchThreadID)
+{
+   if(id.x < uint(size) && id.y <uint(size))
+	   X[id.x+ id.y *size ].y = h[id.x+ id.y *size ];
+}

@@ -3,7 +3,8 @@ using System.Collections;
 
 public class wave_motion : MonoBehaviour 
 {
-	int size 		= 100;
+	[SerializeField]
+	int size 		= 100;   // larger than 65535, bad for int
 	float rate 		= 0.005f;
 	float gamma		= 0.002f;
 	float damping 	= 0.99f;
@@ -16,7 +17,7 @@ public class wave_motion : MonoBehaviour
 	float[,]	cg_p;
 	float[,]	cg_r;
 	float[,]	cg_Ap;
-	bool 	tag=true;
+	//bool 	tag=true;
 
 	Vector3 	cube_v = Vector3.zero;  //?
 	Vector3 	cube_w = Vector3.zero;
@@ -30,15 +31,16 @@ public class wave_motion : MonoBehaviour
 	// Use this for initialization
 	void Start () 
 	{
-		Mesh mesh = GetComponent<MeshFilter> ().mesh;
+		Mesh mesh = GetComponent<MeshFilter>().mesh;
 		mesh.Clear ();
+		mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;   // we need 32 for further!!!
 
-		Vector3[] X=new Vector3[size*size];
+		Vector3[] X=new Vector3[size * size];
 
 		for (int i=0; i<size; i++)
 		for (int j=0; j<size; j++) 
 		{
-			X[i*size+j].x=i*0.1f-size*0.05f;
+			X[i*size+j].x=i*0.1f-size*0.05f;   
 			X[i*size+j].y=0;
 			X[i*size+j].z=j*0.1f-size*0.05f;
 		}
@@ -56,6 +58,8 @@ public class wave_motion : MonoBehaviour
 			T[index*6+5]=(i+1)*size+(j+0);
 			index++;
 		}
+		print("Pos: Start" + X[0]);
+		print("Pos: End" + X[(size -1) * size + size - 1]);
 		mesh.vertices  = X;
 		mesh.triangles = T;
 		mesh.RecalculateNormals ();
@@ -105,6 +109,7 @@ public class wave_motion : MonoBehaviour
 		return ret;
 	}
 
+	//well still ok to GPU but really complicated
 	void Conjugate_Gradient(bool[,] mask, float[,] b, float[,] x, int li, int ui, int lj, int uj)
 	{
 		//Solve the Laplacian problem by CG.
@@ -178,8 +183,10 @@ public class wave_motion : MonoBehaviour
 		block_1_bounds = block_1.GetComponent<BoxCollider>().bounds;
 		//check reduced grid for potential collision
 		//make it back to index of size
-		int li = (int)((block_pos.x + 4.5) * 10f), ri = (int)((block_pos.x + 5.5) * 10f);
-		int lj = (int)((block_pos.z + 4.5) * 10f), rj = (int)((block_pos.z + 5.5) * 10f);
+		//int li = (int)((block_pos.x + (size-1f)*0.05f) * size * 0.1f), ri = (int)((block_pos.x + (size - 1f) * 0.05f) * size * 0.1f);
+		//int lj = (int)((block_pos.z + (size+1f)* 0.05f) * size * 0.1f), rj = (int)((block_pos.z + (size + 1f) * 0.05f) * size * 0.1f);
+		int li = (int)((block_pos.x + size * 0.05f-1.0f) * 10f), ri = (int)((block_pos.x + size * 0.05f+1.0f) * 10f);
+		int lj = (int)((block_pos.z + size * 0.05f-1.0f) * 10f), rj = (int)((block_pos.z + size * 0.05f+1.0f) * 10f);    //from ray intersection back to the index
 		li = Mathf.Clamp(li, 0, size - 1);
 		ri = Mathf.Clamp(ri, 0, size - 1);
 		lj = Mathf.Clamp(lj, 0, size - 1);
@@ -196,7 +203,7 @@ public class wave_motion : MonoBehaviour
 			
 			for (int j=lj; j<=rj; j++)
             {
-				float dis = 100f;
+				float dis = 1000f;
 				Vector3 wave_discrete = wave_x[size * i + j];
 				wave_discrete.y = -10f;   //test from the bottom
 				ray = new Ray(wave_discrete, Vector3.up);
@@ -218,8 +225,8 @@ public class wave_motion : MonoBehaviour
 		block_2_bounds = block_2.GetComponent<BoxCollider>().bounds;
 		//check reduced grid for potential collision
 		//make it back to index of size
-		li = (int)((block_pos.x + 4.5) * 10f);  ri = (int)((block_pos.x + 5.5) * 10f);
-		lj = (int)((block_pos.z + 4.5) * 10f);  rj = (int)((block_pos.z + 5.5) * 10f);
+		li = (int)((block_pos.x + size* 0.05f-1.0f) * 10f); ri = (int)((block_pos.x + size* 0.05f+1.0f) * 10f);
+		lj = (int)((block_pos.z + size* 0.05f-1.0f) * 10f); rj = (int)((block_pos.z + size * 0.05f+1.0f) * 10f);
 		li = Mathf.Clamp(li, 0, size - 1);
 		ri = Mathf.Clamp(ri, 0, size - 1);
 		lj = Mathf.Clamp(lj, 0, size - 1);
@@ -232,7 +239,7 @@ public class wave_motion : MonoBehaviour
 			
 			for (int j = lj; j <= rj; j++)
 			{
-				float dis = 100f;
+				float dis = 1000f;
 				Vector3 wave_discrete = wave_x[size * i + j];
 				wave_discrete.y = -10f;
 				ray = new Ray(wave_discrete, Vector3.up);
@@ -287,7 +294,7 @@ public class wave_motion : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
 	{
-		Mesh mesh = GetComponent<MeshFilter> ().mesh;
+		Mesh mesh = GetComponent<MeshFilter>().mesh;
 		Vector3[] X    = mesh.vertices;
 		float[,] new_h = new float[size, size];
 		float[,] h     = new float[size, size];
@@ -300,7 +307,7 @@ public class wave_motion : MonoBehaviour
 				h[i, j] = X[i*size+j].y;
             }
         }
-		if (Input.GetKeyDown ("r")) 
+		if (Input.GetKeyDown ("r")) // not supported in gpu
 		{
 			//TODO: Add random water.
 			Random.InitState(Time.frameCount);  //use frame count as the seed of random generator
@@ -339,6 +346,6 @@ public class wave_motion : MonoBehaviour
 		}
 		mesh.vertices = X;
 		mesh.RecalculateNormals();
-
+		
 	}
 }
